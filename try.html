@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+	<title>University of Michigan</title>
+	<style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 500px;
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+	
+</head>
+<body>
+  <div id="toc" style="position:absolute; width:380px; height: 100%; overflow:auto; float:left; padding-left:10px; padding-right:10px;">
+     <h1 id="title">Metro LA: Where's that bus?</h1>
+     <div id="stoplist"></div>	 
+  </div>
+  <div id="map_canvas" style="height:100%; margin-left:400px;"></div>
+  <script src="http://code.jquery.com/jquery-1.11.2.min.js" type="text/javascript"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/d3js/5.7.0/d3.min.js" type="text/javascript"></script>
+  <script>
+  var CY={};
+  var busstop=[];
+  var bounds;
+  function trace(message){
+  if(typeof console!='undefined'){
+  console.log(message);
+  }
+  }
+  CY.getBusRoutes=function(){
+  $.getJSON(
+            "http://api.metro.net/agencies/lametro/routes/"+"?callback=?",
+		function(data)
+		{
+			$.each(data.items,function(i,item){
+			$('#stoplist').append(item.id+ ''+'<br>');
+			});
+			
+		});
+}  
+   CY.createStop= function(i,latitude,longitude,title){
+     var markerlatlan=new google.maps.LatLng(latitude,longitude);
+	 bounds.extend(markerlatlan);
+	 map.fitBounds(bounds);
+	 busstop[i]=new google.maps.Marker(
+	 {
+	  position:markerlatlan,
+	  map:map,
+	  title:title
+	 }
+	 );
+   }
+   CY.mapBusStops=function(busnum){
+   bounds=new google.maps.LatLngBounds();
+   $.getJSON("http://api.metro.net/agencies/lametro/routes/"+busnum+"/sequence/?callback=?",function(data){
+       $.each(data.items,function(i,item){
+	    CY.createStop(i,item.latitude,item.longitude,item.display_name);
+	   });
+	   });
+   }
+   CY.mapmaker=function (latitude,longitude,title,contentString){
+    var markerlatlan=new google.maps.LatLng(latitude,longitude);
+	var marker= new google.maps.Marker({
+	 position:markerlatlan,
+	 title:title,
+	 map:map
+	});
+	google.maps.event.addListener(marker,'click',function(){
+	infowindow.setContent(contentString);
+	infowindow.open(map,marker);
+	});
+	}
+  CY.myMap=function() {
+var mapProp= {
+    center:new google.maps.LatLng(42.27663639831826, -83.73671689999998),
+    zoom:5,
+	mapTypeId:google.maps.MapTypeId.TERRAIN
+};
+  map=new google.maps.Map(document.getElementById('map_canvas'),mapProp);
+  CY.getBusRoutes();
+  CY.mapBusStops(4);
+
+}
+
+		
+ </script> 
+
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCmZz6H689seKhq-rd5YeJqlQfSq3MZu6I&callback=CY.myMap"></script>
+
+</body >
+</html>
+
+
